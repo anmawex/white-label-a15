@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { ThemeService } from '../../core/services/theme.service';
-import { CreditSimulatorComponent } from './components/credit-simulator.component';
-import { AmortizationTableComponent } from './components/amortization-table/amortization-table.component';
+import { CreditSimulatorComponent } from '../../shared/components/organisms/credit-simulator/credit-simulator.component';
+import { AmortizationTableComponent } from '../../shared/components/organisms/credit-simulator/amortization-table/amortization-table.component';
 
 @Component({
   selector: 'app-home',

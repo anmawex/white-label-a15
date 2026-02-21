@@ -3,16 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
-import { CreditEngineService } from '../../../core/services/credit-engine.service';
-import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
-import { CreditInput } from '../../../core/models/credit.model';
-import { InputComponent } from '../../../shared/components/atoms/input/input.component';
-import { ButtonComponent } from '../../../shared/components/atoms/button/button.component';
+import { CreditEngineService } from '../../../../core/services/credit-engine.service';
+import { CurrencyFormatPipe } from '../../../pipes/currency-format.pipe';
+import { CreditInput } from '../../../../core/models/credit.model';
+import { InputComponent } from '../../atoms/input/input.component';
+import { ButtonComponent } from '../../atoms/button/button.component';
+import { FormFieldComponent } from '../../molecules/form-field/form-field.component';
 
 @Component({
   selector: 'app-credit-simulator',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyFormatPipe, InputComponent, ButtonComponent],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe, InputComponent, ButtonComponent, FormFieldComponent],
   template: `
     <div class="mt-20 flex flex-col lg:flex-row gap-8 animate-in slide-in-from-bottom-8 duration-700">
       
@@ -22,20 +23,20 @@ import { ButtonComponent } from '../../../shared/components/atoms/button/button.
         
         <form class="space-y-6" *ngIf="localInput" (submit)="$event.preventDefault()">
           
-          <!-- Input Monto (Usando Atomic Design) -->
+          <!-- Input Monto (Usando Atomic Design MOLECULE + ATOM) -->
           <div class="space-y-3">
-            <app-input
-              inputId="requestedAmount"
-              name="requestedAmountInput"
-              type="number"
-              min="100000"
-              max="50000000"
-              step="50000"
-              label="¿Cuánto dinero necesitas?"
-              [rightLabel]="(localInput.requestedAmount | currencyFormat) || ''"
-              [(ngModel)]="localInput.requestedAmount"
-              (ngModelChange)="onInputChange()">
-            </app-input>
+            <app-form-field label="¿Cuánto dinero necesitas?" [rightLabel]="(localInput.requestedAmount | currencyFormat) || ''" forId="requestedAmount">
+              <app-input
+                inputId="requestedAmount"
+                name="requestedAmountInput"
+                type="number"
+                min="100000"
+                max="50000000"
+                step="50000"
+                [(ngModel)]="localInput.requestedAmount"
+                (ngModelChange)="onInputChange()">
+              </app-input>
+            </app-form-field>
 
             <input 
               type="range" 
@@ -52,18 +53,18 @@ import { ButtonComponent } from '../../../shared/components/atoms/button/button.
 
           <!-- Input Plazo (Usando Atomic Design) -->
           <div class="space-y-3 mt-8">
-            <app-input
-              inputId="termMonths"
-              name="termMonthsInput"
-              type="number"
-              min="1"
-              max="72"
-              step="1"
-              label="¿En cuántos meses pagarás?"
-              [rightLabel]="localInput.termMonths + ' meses'"
-              [(ngModel)]="localInput.termMonths"
-              (ngModelChange)="onInputChange()">
-            </app-input>
+            <app-form-field label="¿En cuántos meses pagarás?" [rightLabel]="localInput.termMonths + ' meses'" forId="termMonths">
+              <app-input
+                inputId="termMonths"
+                name="termMonthsInput"
+                type="number"
+                min="1"
+                max="72"
+                step="1"
+                [(ngModel)]="localInput.termMonths"
+                (ngModelChange)="onInputChange()">
+              </app-input>
+            </app-form-field>
 
             <input 
               type="range" 
@@ -80,17 +81,18 @@ import { ButtonComponent } from '../../../shared/components/atoms/button/button.
 
           <!-- Input Seguro de Vida (Usando Atomic Design) -->
           <div class="mt-8">
-            <app-input
-              inputId="lifeInsurance"
-              name="lifeInsuranceInput"
-              type="number"
-              min="0"
-              step="0.01"
-              iconLeft="%"
-              label="Seguro de vida (% saldo)"
-              [(ngModel)]="localInput.lifeInsuranceRateMonthly"
-              (ngModelChange)="onInputChange()">
-            </app-input>
+            <app-form-field label="Seguro de vida (% saldo)" forId="lifeInsurance">
+              <app-input
+                inputId="lifeInsurance"
+                name="lifeInsuranceInput"
+                type="number"
+                min="0"
+                step="0.01"
+                iconLeft="%"
+                [(ngModel)]="localInput.lifeInsuranceRateMonthly"
+                (ngModelChange)="onInputChange()">
+              </app-input>
+            </app-form-field>
           </div>
 
         </form>

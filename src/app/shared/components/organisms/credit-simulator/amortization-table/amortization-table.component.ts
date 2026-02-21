@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { CreditEngineService } from '../../../../core/services/credit-engine.service';
-import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
+import { CreditEngineService } from '../../../../../core/services/credit-engine.service';
+import { CurrencyFormatPipe } from '../../../../pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-amortization-table',
