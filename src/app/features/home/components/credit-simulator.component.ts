@@ -6,11 +6,13 @@ import { Subject, takeUntil } from 'rxjs';
 import { CreditEngineService } from '../../../core/services/credit-engine.service';
 import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
 import { CreditInput } from '../../../core/models/credit.model';
+import { InputComponent } from '../../../shared/components/atoms/input/input.component';
+import { ButtonComponent } from '../../../shared/components/atoms/button/button.component';
 
 @Component({
   selector: 'app-credit-simulator',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe, InputComponent, ButtonComponent],
   template: `
     <div class="mt-20 flex flex-col lg:flex-row gap-8 animate-in slide-in-from-bottom-8 duration-700">
       
@@ -20,25 +22,21 @@ import { CreditInput } from '../../../core/models/credit.model';
         
         <form class="space-y-6" *ngIf="localInput" (submit)="$event.preventDefault()">
           
-          <!-- Input Monto -->
+          <!-- Input Monto (Usando Atomic Design) -->
           <div class="space-y-3">
-            <div class="flex justify-between items-center">
-              <label for="requestedAmount" class="text-sm font-semibold text-foreground/80 cursor-pointer">
-                ¿Cuánto dinero necesitas?
-              </label>
-              <span class="text-sm font-bold text-primary">{{ localInput.requestedAmount | currencyFormat }}</span>
-            </div>
-            <!-- Focus Visible y Outline correctos según normativas de accesibilidad -->
-            <input 
-              id="requestedAmount"
+            <app-input
+              inputId="requestedAmount"
               name="requestedAmountInput"
               type="number"
               min="100000"
               max="50000000"
+              step="50000"
+              label="¿Cuánto dinero necesitas?"
+              [rightLabel]="(localInput.requestedAmount | currencyFormat) || ''"
               [(ngModel)]="localInput.requestedAmount"
-              (ngModelChange)="onInputChange()"
-              class="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-shadow"
-            />
+              (ngModelChange)="onInputChange()">
+            </app-input>
+
             <input 
               type="range" 
               name="requestedAmountSlider"
@@ -47,62 +45,52 @@ import { CreditInput } from '../../../core/models/credit.model';
               step="500000"
               [(ngModel)]="localInput.requestedAmount"
               (ngModelChange)="onInputChange()"
-              class="w-full accent-primary cursor-pointer hover:opacity-90"
+              class="w-full accent-[hsl(var(--primary))] cursor-pointer hover:opacity-90 mt-2"
               aria-label="Ajustar monto solicitado"
             />
           </div>
 
-          <!-- Input Plazo -->
+          <!-- Input Plazo (Usando Atomic Design) -->
           <div class="space-y-3 mt-8">
-            <div class="flex justify-between items-center">
-              <label for="termMonths" class="text-sm font-semibold text-foreground/80 cursor-pointer">
-                ¿En cuántos meses pagarás?
-              </label>
-              <span class="text-sm font-bold text-primary">{{ localInput.termMonths }} meses</span>
-            </div>
-            <input 
-              id="termMonths"
+            <app-input
+              inputId="termMonths"
               name="termMonthsInput"
               type="number"
               min="1"
               max="72"
+              step="1"
+              label="¿En cuántos meses pagarás?"
+              [rightLabel]="localInput.termMonths + ' meses'"
               [(ngModel)]="localInput.termMonths"
-              (ngModelChange)="onInputChange()"
-              class="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-shadow"
-            />
+              (ngModelChange)="onInputChange()">
+            </app-input>
+
             <input 
               type="range" 
-              name="plazoSlider"
+              name="termMonthsSlider"
               min="1" 
               max="72" 
               step="1"
               [(ngModel)]="localInput.termMonths"
               (ngModelChange)="onInputChange()"
-              class="w-full accent-primary cursor-pointer hover:opacity-90"
+              class="w-full accent-[hsl(var(--primary))] cursor-pointer hover:opacity-90 mt-2"
               aria-label="Ajustar plazo en meses"
             />
           </div>
 
-          <!-- Input Seguro de Vida -->
-          <div class="space-y-3 mt-8">
-            <div class="flex justify-between items-center">
-              <label for="lifeInsurance" class="text-sm font-semibold text-foreground/80 cursor-pointer">
-                Seguro de vida (% saldo)
-              </label>
-            </div>
-            <div class="relative">
-              <input 
-                id="lifeInsurance"
-                name="lifeInsuranceInput"
-                type="number"
-                step="0.01"
-                min="0"
-                [(ngModel)]="localInput.lifeInsuranceRateMonthly"
-                (ngModelChange)="onInputChange()"
-                class="w-full rounded-xl border border-input bg-background px-4 py-3 pl-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-shadow"
-              />
-              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">%</span>
-            </div>
+          <!-- Input Seguro de Vida (Usando Atomic Design) -->
+          <div class="mt-8">
+            <app-input
+              inputId="lifeInsurance"
+              name="lifeInsuranceInput"
+              type="number"
+              min="0"
+              step="0.01"
+              iconLeft="%"
+              label="Seguro de vida (% saldo)"
+              [(ngModel)]="localInput.lifeInsuranceRateMonthly"
+              (ngModelChange)="onInputChange()">
+            </app-input>
           </div>
 
         </form>
@@ -157,11 +145,11 @@ import { CreditInput } from '../../../core/models/credit.model';
 
           </div>
           
-          <button 
-            type="button"
-            class="mt-8 w-full py-4 rounded-xl font-bold text-primary-foreground bg-primary hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
-            Solicitar Ahora
-          </button>
+          <div class="mt-8 w-full">
+            <app-button (onClick)="onSubmit()">
+              Solicitar Ahora
+            </app-button>
+          </div>
         </div>
       </div>
 
@@ -193,5 +181,10 @@ export class CreditSimulatorComponent implements OnInit, OnDestroy {
     // Cuando el usuario mueve un slider o escribe, enviamos al "jefe" 
     // la nueva copia profunda para que dispare combineLatest y recálcule en tiempo real.
     this.creditEngine.updateCreditInput(this.localInput);
+  }
+
+  onSubmit(): void {
+    console.log('Crédito Solicitado:', this.localInput);
+    alert('¡Solicitud enviada con éxito!');
   }
 }
