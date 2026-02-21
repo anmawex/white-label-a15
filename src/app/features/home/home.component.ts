@@ -2,11 +2,13 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { ThemeService } from '../../core/services/theme.service';
+import { CreditSimulatorComponent } from './components/credit-simulator.component';
+import { AmortizationTableComponent } from './components/amortization-table/amortization-table.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CreditSimulatorComponent, AmortizationTableComponent],
   template: `
     <div class="min-h-screen flex flex-col p-6 bg-background transition-colors duration-500 relative overflow-hidden">
       <!-- Decorative background blooms -->
@@ -80,6 +82,13 @@ import { ThemeService } from '../../core/services/theme.service';
           </div>
 
         </section>
+
+        <!-- El Simulador Financiero que pide los datos y se comunica con el Engine -->
+        <app-credit-simulator></app-credit-simulator>
+
+        <!-- Tabla detallada (Escucha al engine también) -->
+        <app-amortization-table></app-amortization-table>
+
       </div>
     </div>
   `,
