@@ -4,11 +4,12 @@ import { Observable } from 'rxjs';
 import { ThemeService } from '../../core/services/theme.service';
 import { CreditSimulatorComponent } from '../../shared/components/organisms/credit-simulator/credit-simulator.component';
 import { AmortizationTableComponent } from '../../shared/components/organisms/credit-simulator/amortization-table/amortization-table.component';
+import { WhiteLabelWidgetComponent } from '../../shared/components/organisms/white-label-widget/white-label-widget.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, CreditSimulatorComponent, AmortizationTableComponent],
+  imports: [CommonModule, CreditSimulatorComponent, AmortizationTableComponent, WhiteLabelWidgetComponent],
   template: `
     <div class="min-h-screen flex flex-col p-6 bg-background transition-colors duration-500 relative overflow-hidden">
       <!-- Decorative background blooms -->
@@ -83,13 +84,22 @@ import { AmortizationTableComponent } from '../../shared/components/organisms/cr
 
         </section>
 
-        <!-- El Simulador Financiero que pide los datos y se comunica con el Engine -->
-        <app-credit-simulator></app-credit-simulator>
+        <!-- El Simulador + Widget en columnas -->
+        <div class="mt-20 flex flex-col xl:flex-row gap-10 items-start">
 
-        <!-- Tabla detallada (Escucha al engine también) -->
-        <app-amortization-table></app-amortization-table>
+          <!-- Columna Izquierda: Simulador Full + Tabla -->
+          <div class="flex-1 min-w-0 space-y-0">
+            <app-credit-simulator></app-credit-simulator>
+            <app-amortization-table></app-amortization-table>
+          </div>
 
-      </div>
+          <!-- Columna Derecha: El Widget White-Label (la prerevisualización) -->
+          <div class="w-full xl:w-[360px] shrink-0 sticky top-6">
+            <p class="text-xs font-black uppercase tracking-widest text-foreground/40 mb-4 text-center">⚡ Vista Previa White-Label Widget</p>
+            <app-white-label-widget></app-white-label-widget>
+          </div>
+
+        </div>
     </div>
   `,
   styles: [`
