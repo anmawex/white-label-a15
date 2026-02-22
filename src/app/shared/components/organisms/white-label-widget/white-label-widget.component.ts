@@ -14,11 +14,13 @@ import { CreditEngineService } from '../../../../core/services/credit-engine.ser
 import { CurrencyFormatPipe } from '../../../pipes/currency-format.pipe';
 import { AppConfiguration } from '../../../../core/models/configuration.model';
 import { CreditBreakdown, CreditInput } from '../../../../core/models/credit.model';
+import { InputComponent } from '../../atoms/input/input.component';
+import { FormFieldComponent } from '../../molecules/form-field/form-field.component';
 
 @Component({
   selector: 'app-white-label-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyFormatPipe],
+  imports: [CommonModule, FormsModule, CurrencyFormatPipe, InputComponent, FormFieldComponent],
   template: `
     <div
       class="w-full rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500"
@@ -57,56 +59,43 @@ import { CreditBreakdown, CreditInput } from '../../../../core/models/credit.mod
           <p class="text-foreground/40 text-xs mt-2">Sistema de amortización Francés</p>
         </div>
 
-        <!-- ── Slider de Monto ── -->
+        <!-- ── Digitación de Monto ── -->
         <div class="space-y-3" *ngIf="localInput && config">
-          <div class="flex justify-between text-sm font-semibold">
-            <span class="text-foreground/70">¿Cuánto necesitas?</span>
-            <span [style.color]="'hsl(var(--widget-primary))'">
-              {{ localInput.requestedAmount | currencyFormat }}
-            </span>
-          </div>
-          <input
-            type="range"
-            name="widgetAmountSlider"
-            [min]="config.validation.minAmount"
-            [max]="config.validation.maxAmount"
-            step="500000"
-            [(ngModel)]="localInput.requestedAmount"
-            (ngModelChange)="onSliderChange()"
-            class="w-full h-2 rounded-full appearance-none cursor-pointer outline-none
-                   focus-visible:ring-2 focus-visible:ring-offset-2 transition-shadow"
-            [style.accentColor]="'hsl(var(--widget-primary))'"
-            aria-label="Ajustar monto del crédito"
-          />
-          <div class="flex justify-between text-xs text-foreground/40">
-            <span>{{ config.validation.minAmount | currencyFormat }}</span>
-            <span>{{ config.validation.maxAmount | currencyFormat }}</span>
+          <app-form-field label="¿Cuánto necesitas?" [rightLabel]="(localInput.requestedAmount | currencyFormat) || ''" forId="widgetAmount">
+            <app-input
+              inputId="widgetAmount"
+              name="widgetAmountInput"
+              type="number"
+              [min]="config.validation.minAmount"
+              [max]="config.validation.maxAmount"
+              step="50000"
+              [(ngModel)]="localInput.requestedAmount"
+              (ngModelChange)="onSliderChange()">
+            </app-input>
+          </app-form-field>
+          <!-- Alerta -->
+          <div *ngIf="localInput.requestedAmount < config.validation.minAmount || localInput.requestedAmount > config.validation.maxAmount" class="text-xs font-bold text-red-500 mt-2">
+            Rango permitido: {{ config.validation.minAmount | currencyFormat }} - {{ config.validation.maxAmount | currencyFormat }}
           </div>
         </div>
 
-        <!-- ── Selector de Cuotas ── -->
+        <!-- ── Digitación de Plazo ── -->
         <div class="space-y-3" *ngIf="localInput && config">
-          <div class="flex justify-between text-sm font-semibold">
-            <span class="text-foreground/70">¿En cuántas cuotas?</span>
-            <span [style.color]="'hsl(var(--widget-primary))'">
-              {{ localInput.termMonths }} meses
-            </span>
-          </div>
-
-          <!-- Chips de cuotas rápidas -->
-          <div class="grid grid-cols-4 gap-2">
-            <button
-              *ngFor="let t of termOptions"
-              type="button"
-              class="py-2 rounded-xl text-sm font-bold border-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95"
-              [style.borderColor]="localInput.termMonths === t ? 'hsl(var(--widget-primary))' : 'transparent'"
-              [style.backgroundColor]="localInput.termMonths === t ? 'hsl(var(--widget-primary) / 0.12)' : 'hsl(var(--muted))'"
-              [style.color]="localInput.termMonths === t ? 'hsl(var(--widget-primary))' : 'hsl(var(--muted-foreground))'"
-              [style.--tw-ring-color]="'hsl(var(--widget-primary))'"
-              (click)="setTerm(t)"
-            >
-              {{ t }}m
-            </button>
+          <app-form-field label="¿En cuántos meses?" [rightLabel]="localInput.termMonths + ' meses'" forId="widgetTerm">
+             <app-input
+              inputId="widgetTerm"
+              name="widgetTermInput"
+              type="number"
+              min="1"
+              [max]="config.validation.maxTermMonths"
+              step="1"
+              [(ngModel)]="localInput.termMonths"
+              (ngModelChange)="onSliderChange()">
+            </app-input>
+          </app-form-field>
+          <!-- Alerta -->
+          <div *ngIf="localInput.termMonths > config.validation.maxTermMonths || localInput.termMonths < 1" class="text-xs font-bold text-red-500 mt-2">
+            Plazo máximo permitido: {{ config.validation.maxTermMonths }} meses
           </div>
         </div>
 
@@ -134,15 +123,17 @@ import { CreditBreakdown, CreditInput } from '../../../../core/models/credit.mod
         <!-- ── CTA Button ── -->
         <button
           type="button"
+          [disabled]="isInvalid()"
           class="w-full py-4 font-black text-white text-sm uppercase tracking-widest
-                 transition-all duration-200 active:scale-[0.98] shadow-lg
+                 transition-all duration-200 shadow-lg
                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-          [style.background]="'hsl(var(--widget-primary))'"
+          [ngClass]="isInvalid() ? 'opacity-50 cursor-not-allowed scale-100' : 'active:scale-[0.98] cursor-pointer hover:opacity-95'"
+          [style.background]="isInvalid() ? 'hsl(var(--muted-foreground))' : 'hsl(var(--widget-primary))'"
           [style.borderRadius]="widgetRadius"
-          [style.boxShadow]="'0 8px 24px hsl(var(--widget-primary) / 0.35)'"
+          [style.boxShadow]="isInvalid() ? 'none' : '0 8px 24px hsl(var(--widget-primary) / 0.35)'"
           [style.--tw-ring-color]="'hsl(var(--widget-primary))'"
         >
-          Solicitar este Crédito
+          {{ isInvalid() ? 'Corrige los errores' : 'Solicitar este Crédito' }}
         </button>
 
         <!-- Pie de transparencia -->
@@ -254,5 +245,17 @@ export class WhiteLabelWidgetComponent implements OnInit, OnDestroy {
       h /= 6;
     }
     return `${Math.round(h*360)} ${Math.round(s*100)}% ${Math.round(l*100)}%`;
+  }
+
+  isInvalid(): boolean {
+    if (!this.localInput || !this.config) return true;
+    
+    const amountOut = this.localInput.requestedAmount < this.config.validation.minAmount || 
+                      this.localInput.requestedAmount > this.config.validation.maxAmount;
+    
+    const termOut = this.localInput.termMonths < 1 || 
+                    this.localInput.termMonths > this.config.validation.maxTermMonths;
+
+    return amountOut || termOut;
   }
 }
