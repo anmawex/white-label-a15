@@ -199,6 +199,17 @@ export class ConfigPanelComponent implements OnInit, OnDestroy {
   }
 
   onConfigChange(): void {
+    // Sanitización obligatoria: Si el Administrador borra los campos (queda vacío/null/NaN), 
+    // forzamos a que el sistema asuma un valor seguro de 0 (Cero).
+    this.config.validation.minAmount = Number(this.config.validation.minAmount) || 0;
+    this.config.validation.maxAmount = Number(this.config.validation.maxAmount) || 0;
+    this.config.validation.maxTermMonths = Number(this.config.validation.maxTermMonths) || 0;
+
+    // Extendemos esta seguridad a las reglas financieras por buenas prácticas
+    this.config.financial.monthlyInterestRate = Number(this.config.financial.monthlyInterestRate) || 0;
+    this.config.financial.guaranteeFundPercentage = Number(this.config.financial.guaranteeFundPercentage) || 0;
+    this.config.financial.digitalSignatureValue = Number(this.config.financial.digitalSignatureValue) || 0;
+
     this.configService.updateConfiguration(this.config);
   }
 

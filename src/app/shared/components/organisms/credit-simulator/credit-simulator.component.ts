@@ -4,8 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
 import { CreditEngineService } from '../../../../core/services/credit-engine.service';
+import { ConfigurationService } from '../../../../core/services/configuration.service';
 import { CurrencyFormatPipe } from '../../../pipes/currency-format.pipe';
 import { CreditInput } from '../../../../core/models/credit.model';
+import { AppConfiguration } from '../../../../core/models/configuration.model';
 import { InputComponent } from '../../atoms/input/input.component';
 import { ButtonComponent } from '../../atoms/button/button.component';
 import { FormFieldComponent } from '../../molecules/form-field/form-field.component';
@@ -24,14 +26,14 @@ import { FormFieldComponent } from '../../molecules/form-field/form-field.compon
         <form class="space-y-6" *ngIf="localInput" (submit)="$event.preventDefault()">
           
           <!-- Input Monto (Usando Atomic Design MOLECULE + ATOM) -->
-          <div class="space-y-3">
+          <div class="space-y-3" *ngIf="config">
             <app-form-field label="¿Cuánto dinero necesitas?" [rightLabel]="(localInput.requestedAmount | currencyFormat) || ''" forId="requestedAmount">
               <app-input
                 inputId="requestedAmount"
                 name="requestedAmountInput"
                 type="number"
-                min="100000"
-                max="50000000"
+                [min]="config.validation.minAmount"
+                [max]="config.validation.maxAmount"
                 step="50000"
                 [(ngModel)]="localInput.requestedAmount"
                 (ngModelChange)="onInputChange()">
@@ -41,25 +43,35 @@ import { FormFieldComponent } from '../../molecules/form-field/form-field.compon
             <input 
               type="range" 
               name="requestedAmountSlider"
-              min="100000" 
-              max="50000000" 
+              [min]="config.validation.minAmount" 
+              [max]="config.validation.maxAmount" 
               step="500000"
               [(ngModel)]="localInput.requestedAmount"
               (ngModelChange)="onInputChange()"
               class="w-full accent-[hsl(var(--primary))] cursor-pointer hover:opacity-90 mt-2"
               aria-label="Ajustar monto solicitado"
             />
+
+            <!-- Alertas de validación de monto -->
+            <div *ngIf="localInput.requestedAmount < config.validation.minAmount" class="text-xs font-bold text-red-500 flex items-center gap-1.5 mt-2 animate-in slide-in-from-top-1 fade-in duration-200">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Monto mínimo permitido: {{ config.validation.minAmount | currencyFormat }}
+            </div>
+            <div *ngIf="localInput.requestedAmount > config.validation.maxAmount" class="text-xs font-bold text-red-500 flex items-center gap-1.5 mt-2 animate-in slide-in-from-top-1 fade-in duration-200">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              El límite máximo es: {{ config.validation.maxAmount | currencyFormat }}
+            </div>
           </div>
 
           <!-- Input Plazo (Usando Atomic Design) -->
-          <div class="space-y-3 mt-8">
+          <div class="space-y-3 mt-8" *ngIf="config">
             <app-form-field label="¿En cuántos meses pagarás?" [rightLabel]="localInput.termMonths + ' meses'" forId="termMonths">
               <app-input
                 inputId="termMonths"
                 name="termMonthsInput"
                 type="number"
                 min="1"
-                max="72"
+                [max]="config.validation.maxTermMonths"
                 step="1"
                 [(ngModel)]="localInput.termMonths"
                 (ngModelChange)="onInputChange()">
@@ -70,13 +82,19 @@ import { FormFieldComponent } from '../../molecules/form-field/form-field.compon
               type="range" 
               name="termMonthsSlider"
               min="1" 
-              max="72" 
+              [max]="config.validation.maxTermMonths" 
               step="1"
               [(ngModel)]="localInput.termMonths"
               (ngModelChange)="onInputChange()"
               class="w-full accent-[hsl(var(--primary))] cursor-pointer hover:opacity-90 mt-2"
               aria-label="Ajustar plazo en meses"
             />
+
+            <!-- Alertas de validación de plazo -->
+            <div *ngIf="localInput.termMonths > config.validation.maxTermMonths" class="text-xs font-bold text-red-500 flex items-center gap-1.5 mt-2 animate-in slide-in-from-top-1 fade-in duration-200">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Plazo máximo permitido: {{ config.validation.maxTermMonths }} meses
+            </div>
           </div>
 
           <!-- Input Seguro de Vida (Usando Atomic Design) -->
@@ -160,13 +178,21 @@ import { FormFieldComponent } from '../../molecules/form-field/form-field.compon
 })
 export class CreditSimulatorComponent implements OnInit, OnDestroy {
   public localInput!: CreditInput;
+  public config!: AppConfiguration;
   private destroy$ = new Subject<void>();
 
-  constructor(public creditEngine: CreditEngineService) {}
+  constructor(
+    public creditEngine: CreditEngineService,
+    private configService: ConfigurationService
+  ) {}
 
   ngOnInit(): void {
-    // Al igual que el Panel, rompemos la referencia al iniciar el componente 
-    // para tener control bidireccional puro en este componente sin mutar la fuente.
+    // Escuchamos el config para los mínimos y máximos de la UI
+    this.configService.config$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(cfg => this.config = cfg);
+
+    // Rota la referencia para tener binding bidireccional local
     this.creditEngine.creditInput$
       .pipe(takeUntil(this.destroy$))
       .subscribe((data: CreditInput) => {

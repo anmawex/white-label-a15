@@ -69,12 +69,20 @@ export class CreditEngineService {
   }
 
   /**
-   * Actualiza el input del crédito, lo que dispara automáticamente
-   * un nuevo cálculo en el stream breakdown$.
+   * Actualiza el input del crédito, sanitizando y convirtiendo a número
+   * para prevenir que los inputs dinámicos de Angular inyecten Strings que
+   * rompen las fórmulas matemáticas (concatenación vs suma).
    */
   public updateCreditInput(input: Partial<CreditInput>): void {
     const current = this.creditInputSubject.getValue();
-    this.creditInputSubject.next({ ...current, ...input });
+    
+    const nextVal: CreditInput = {
+      requestedAmount: Number(input.requestedAmount ?? current.requestedAmount) || 0,
+      termMonths: Number(input.termMonths ?? current.termMonths) || 1,
+      lifeInsuranceRateMonthly: Number(input.lifeInsuranceRateMonthly ?? current.lifeInsuranceRateMonthly) || 0
+    };
+
+    this.creditInputSubject.next(nextVal);
   }
 
   /**
