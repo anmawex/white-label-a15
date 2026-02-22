@@ -21,6 +21,27 @@ type PreviewTab = 'widget' | 'simulator' | 'amortization';
       <!-- ── TOP NAV BAR ── -->
       <nav class="h-14 shrink-0 flex items-center justify-between px-6 border-b border-border/60 bg-card/80 backdrop-blur z-20">
         <div class="flex items-center gap-3">
+
+          <!-- ☰ Sidebar toggle — siempre visible en la barra superior -->
+          <button
+            id="sidebar-toggle-btn"
+            (click)="toggleSidebar()"
+            class="flex items-center justify-center h-8 w-8 rounded-lg text-foreground/70
+                   hover:bg-primary/10 hover:text-primary border border-border/50
+                   transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            [title]="sidebarOpen ? 'Cerrar panel' : 'Abrir panel de control'"
+            aria-label="Toggle sidebar"
+          >
+            <!-- Hamburguesa cuando está cerrado -->
+            <svg *ngIf="!sidebarOpen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <!-- Doble flecha izquierda cuando está abierto -->
+            <svg *ngIf="sidebarOpen" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7M18 19l-7-7 7-7"/>
+            </svg>
+          </button>
+
           <span class="relative flex h-2.5 w-2.5">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
             <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary"></span>
@@ -49,9 +70,19 @@ type PreviewTab = 'widget' | 'simulator' | 'amortization';
       <!-- ── SPLIT BODY ── -->
       <div class="flex-1 flex min-h-0 overflow-hidden">
 
-        <!-- ◀ IZQUIERDA: Panel de Configuración -->
-        <aside class="w-80 shrink-0 overflow-y-auto border-r border-border/60">
-          <app-config-panel></app-config-panel>
+        <!-- ◀ IZQUIERDA: Sidebar colapsable con transición suave -->
+        <aside
+          class="shrink-0 border-r border-border/60 overflow-hidden transition-[width] duration-300 ease-in-out"
+          [style.width]="sidebarOpen ? '320px' : '0px'"
+        >
+          <!--
+            El contenedor interno tiene ancho fijo de 320px.
+            El <aside> es el "molde" que se estrecha o expande.
+            Esto evita que el contenido se "aplaste" durante la transición.
+          -->
+          <div class="w-[320px] h-full overflow-y-auto">
+            <app-config-panel></app-config-panel>
+          </div>
         </aside>
 
         <!-- ▶ DERECHA: Zona de Previsualización con Tabs -->
@@ -143,6 +174,7 @@ type PreviewTab = 'widget' | 'simulator' | 'amortization';
 export class HomeComponent {
   isDark$: Observable<boolean>;
   activeTab: PreviewTab = 'widget';
+  sidebarOpen = true;
 
   constructor(private themeService: ThemeService) {
     this.isDark$ = this.themeService.isDarkMode$;
@@ -150,5 +182,9 @@ export class HomeComponent {
 
   toggleTheme(): void {
     this.themeService.toggleTheme();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
   }
 }
